@@ -26,12 +26,17 @@ public abstract class TitleScreenMixin extends Screen {
         super(title);
     }
 
-    @Inject(method = "init", at = @At("TAIL"))
-    private void init(CallbackInfo info) {
-        if (Atum.isRunning()) {
+    @Inject(method = "init", at = @At("HEAD"))
+    private void reset(CallbackInfo ci) {
+        if (Atum.isRunning() && !Atum.config.hotkeyOnly) {
             Atum.scheduleReset();
+        } else if (!Atum.isResetScheduled()) {
+            Atum.stopRunning();
         }
+    }
 
+    @Inject(method = "init", at = @At("TAIL"))
+    private void initWidgets(CallbackInfo info) {
         this.addButton(new ButtonWidget(this.width / 2 - 124, this.height / 4 + 48, 20, 20, LiteralText.EMPTY, button -> {
             if (!Screen.hasShiftDown()) {
                 Atum.scheduleReset();

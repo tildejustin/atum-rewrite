@@ -69,6 +69,7 @@ public class AtumConfig implements SpeedrunConfig {
     public DataPackSettings dataPackSettings = DataPackSettings.SAFE_MODE;
 
     public boolean demoMode;
+    public boolean hotkeyOnly;
 
     @SuppressWarnings({"unused", "FieldCanBeLocal"}) // saved to config for PaceMan
     @Config.Hide

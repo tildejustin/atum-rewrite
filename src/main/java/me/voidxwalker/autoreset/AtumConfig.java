@@ -1,5 +1,6 @@
 package me.voidxwalker.autoreset;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -9,7 +10,6 @@ import me.voidxwalker.autoreset.mixin.access.CreateWorldScreen$ModeAccessor;
 import me.voidxwalker.autoreset.mixin.access.GeneratorTypeAccessor;
 import me.voidxwalker.autoreset.mixin.access.RuleAccessor;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.screen.world.CreateWorldScreen;
 import net.minecraft.client.world.GeneratorType;
@@ -21,7 +21,6 @@ import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameRules;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mcsr.speedrunapi.config.SpeedrunConfigAPI;
 import org.mcsr.speedrunapi.config.SpeedrunConfigContainer;
@@ -43,25 +42,36 @@ public class AtumConfig implements SpeedrunConfig {
     @Config.Ignored
     private SpeedrunConfigContainer<?> container;
 
+    @Config.Hide
     public CreateWorldScreen.Mode gameMode = CreateWorldScreen.Mode.SURVIVAL;
+    @Config.Hide
     public boolean structures = true;
     // renamed from difficulty to worldDifficulty in 2.1
     // 2.0 set the default to NORMAL, causing people to play on normal instead of easy because they weren't used to it
+    @Config.Hide
     public Difficulty worldDifficulty = Difficulty.EASY;
+    @Config.Hide
     @Config.Strings.MaxChars(32)
     public String seed = "";
+    @Config.Hide
     public boolean bonusChest = false;
+    @Config.Hide
     public boolean cheatsEnabled;
+    @Config.Hide
     public AtumGeneratorType generatorType = AtumGeneratorType.DEFAULT;
+    @Config.Hide
     public String generatorDetails = "";
+    @Config.Hide
     @Config.Access(setter = "setGameRules")
     public GameRules gameRules = new GameRules();
+    @Config.Hide
     @Config.Access(setter = "setDataPackSettings")
     public DataPackSettings dataPackSettings = DataPackSettings.SAFE_MODE;
 
     public boolean demoMode;
 
     @SuppressWarnings({"unused", "FieldCanBeLocal"}) // saved to config for PaceMan
+    @Config.Hide
     private boolean hasLegalSettings;
 
     @Config.Ignored
@@ -299,7 +309,7 @@ public class AtumConfig implements SpeedrunConfig {
             texts.add(new TranslatableText("selectWorld.dataPacks").append(": " + dataPackInformation));
         }
         if (this.demoMode) {
-            texts.add(new TranslatableText("atum.config.demoMode", ScreenTexts.ON));
+            texts.add(new TranslatableText("speedrunapi.config.atum.option.demoMode").append(": ").append(ScreenTexts.ON));
         }
         return texts;
     }
@@ -380,17 +390,19 @@ public class AtumConfig implements SpeedrunConfig {
     }
 
     @Override
-    public @NotNull Screen createConfigScreen(Screen parent) {
-        // isAvailable() already takes care of this, but because it's so important we do another check just to be completely sure Atum is not running when the player opens the Atum config
-        if (Atum.isRunning()) {
-            throw new IllegalStateException("Cannot configure Atum while it's running.");
-        }
-        return new AtumCreateWorldScreen(parent);
+    public boolean isAvailable() {
+        return !Atum.isRunning();
     }
 
     @Override
-    public boolean isAvailable() {
-        return !Atum.isRunning();
+    public @Nullable Set<SpeedrunOption<Void>> addScreenEntries() {
+        return ImmutableSet.of(
+                new SpeedrunConfigAPI.CustomButtonOption.Builder(
+                        this,
+                        "worldGen",
+                        new TranslatableText("atum.menu.configure"),
+                        button -> MinecraftClient.getInstance().openScreen(new AtumCreateWorldScreen(MinecraftClient.getInstance().currentScreen))
+                ).build());
     }
 
     @SuppressWarnings("unused")
